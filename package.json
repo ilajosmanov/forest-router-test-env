@@ -1,0 +1,44 @@
+{
+  "name": "forest-project",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview",
+    "lint": "eslint '*/**/*.{js,ts}' --quiet --fix"
+  },
+  "devDependencies": {
+    "@eslint-kit/eslint-config-base": "^4.0.0",
+    "@eslint-kit/eslint-config-patch": "^1.0.0",
+    "@eslint-kit/eslint-config-prettier": "^3.0.0",
+    "@eslint-kit/eslint-config-typescript": "^5.0.1",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@types/node": "^15.6.1",
+    "@typescript-eslint/parser": "4.15.0",
+    "@vanilla-extract/css": "^1.0.0",
+    "@vanilla-extract/vite-plugin": "^1.0.0",
+    "effector-logger": "^0.10.0",
+    "eslint": "7.10.0",
+    "path": "^0.12.7",
+    "prettier": "2.3.0",
+    "simple-git-hooks": "^2.4.1",
+    "typescript": "^4.2.3",
+    "vite": "^2.3.4",
+    "vite-plugin-svg-icons": "^0.6.2"
+  },
+  "dependencies": {
+    "effector": "^21.8.11",
+    "forest": "^0.19.6",
+    "history": "^5.0.0",
+    "path-to-regexp": "^6.2.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "npm run lint",
+      "git add"
+    ]
+  }
+}
