@@ -17,6 +17,7 @@ const routes: Route[] = [
       {
         path: '/news',
         fn: News,
+        redirect: '/latest',
         children: [
           { path: '/latest', fn: Latest },
           { path: '/hot', fn: Hot },

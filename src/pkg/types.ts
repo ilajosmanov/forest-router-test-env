@@ -9,10 +9,11 @@ export type Component = (args: Args) => void
 
 export type RouteModel = {
   path: string
-  fn: Component
-  pattern: string
   active: boolean
+  pattern: string
+  fn: Component
   parents: RouteModel[]
+  redirect?: string
   children?: Route[]
 }
 

@@ -5,10 +5,11 @@ import {
   guard,
   Store,
   sample,
-  restore,
+  combine,
   createEvent,
   createStore,
-} from 'effector'
+  createEffect,
+} from 'effector-logger'
 
 import { reduceMap } from './lib/reduce-map'
 import { sortPatterns } from './lib/sort-patterns'
@@ -23,18 +24,31 @@ type Attrs = {
 function createRouter(routes: Route[]) {
   const history = createBrowserHistory()
 
+  const push = createEffect(history.push)
+  const replace = createEffect(history.replace)
+
   const pathChanged = createEvent<string>()
   const routeMapUpdated = createEvent<RouteModel[]>()
 
+  const $path = createStore(history.location.pathname + history.location.search)
   const $routesMap = createStore<Record<string, RouteModel>>({})
+
   const $patterns = $routesMap.map((state) => sortPatterns(Object.keys(state)))
-  const $path = restore(
-    pathChanged,
-    history.location.pathname + history.location.search
+  const $routesMetaInfo = combine(
+    $routesMap,
+    $patterns,
+    (routesMap, patterns) => ({
+      routesMap,
+      patterns,
+    })
   )
 
   $routesMap.on(routeMapUpdated, (_, map) => reduceMap(map))
-  pathChanged.watch(history.push)
+  $path
+    .on(pathChanged, (_, pathname) => pathname)
+    // @ts-ignore
+    .on([push.done, replace.done], (_, { params }) => params.pathname ?? params)
+
   history.listen(({ location, action }) => {
     if (action === 'POP') {
       pathChanged(location.pathname)
@@ -42,19 +56,25 @@ function createRouter(routes: Route[]) {
   })
 
   sample({
-    source: {
-      routeMap: $routesMap,
-      patterns: $patterns,
+    source: $routesMetaInfo,
+    clock: [pathChanged, push, replace],
+    fn: (source, to) => {
+      // @ts-ignore
+      const href: string = to.pathname ?? to
+      const { map } = routeResolve(source, href)
+      return map
     },
-    clock: pathChanged,
-    fn: routeResolve,
     target: $routesMap,
   })
 
   sample({
-    source: $path,
+    source: { $routesMetaInfo, $path },
     clock: routeMapUpdated,
-    target: pathChanged,
+    fn: ({ $path, $routesMetaInfo }) => {
+      const { url } = routeResolve($routesMetaInfo, $path)
+      return url
+    },
+    target: replace,
   })
 
   const render = (config: RouteModel) => {
@@ -78,6 +98,12 @@ function createRouter(routes: Route[]) {
       route.pattern = parent
         ? (parent.pattern + route.path).replace('//', '/')
         : route.path
+
+      if (route.redirect) {
+        route.redirect = parent
+          ? (route.pattern + route.redirect).replace('//', '/')
+          : route.redirect
+      }
 
       if (parent) {
         route.parents.push(parent)
@@ -103,14 +129,11 @@ function createRouter(routes: Route[]) {
     const $value = is.store(href) ? href : createStore(href)
     const trigger = createEvent<MouseEvent>()
 
-    sample({
+    guard({
       source: $value,
-      clock: guard({
-        source: { $value, $path },
-        clock: trigger,
-        filter: ({ $value, $path }) => $value !== $path,
-      }),
-      target: pathChanged,
+      clock: trigger,
+      filter: combine($value, $path, (value, path) => value !== path),
+      target: push,
     })
 
     h('a', {
