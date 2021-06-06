@@ -9,10 +9,11 @@ import {
   createEvent,
   createStore,
   createEffect,
+  merge,
 } from 'effector-logger'
 
 import { reduceMap } from './lib/reduce-map'
-import { sortPatterns } from './lib/sort-patterns'
+import { makePatterns } from './lib/sort-patterns'
 import { routeResolve } from './lib/route-resolve'
 import type { Route, RouteModel } from './types'
 
@@ -24,16 +25,29 @@ type Attrs = {
 function createRouter(routes: Route[]) {
   const history = createBrowserHistory()
 
-  const push = createEffect(history.push)
-  const replace = createEffect(history.replace)
+  /**
+   *
+   * Internal effects for control history library [this library must be remove in the future]
+   *
+   */
+  const historyPush = createEffect(history.push)
+  const historyReplace = createEffect(history.replace)
+
+  /**
+   *
+   * public interface for change route (push, replace)
+   *
+   */
+  const push = createEvent<string>()
+  const replace = createEvent<string>()
 
   const pathChanged = createEvent<string>()
-  const routeMapUpdated = createEvent<RouteModel[]>()
+  const routerCreated = createEvent<RouteModel[]>()
 
   const $path = createStore(history.location.pathname + history.location.search)
   const $routesMap = createStore<Record<string, RouteModel>>({})
 
-  const $patterns = $routesMap.map((state) => sortPatterns(Object.keys(state)))
+  const $patterns = $routesMap.map(makePatterns)
   const $routesMetaInfo = combine(
     $routesMap,
     $patterns,
@@ -43,11 +57,13 @@ function createRouter(routes: Route[]) {
     })
   )
 
-  $routesMap.on(routeMapUpdated, (_, map) => reduceMap(map))
   $path
     .on(pathChanged, (_, pathname) => pathname)
-    // @ts-ignore
-    .on([push.done, replace.done], (_, { params }) => params.pathname ?? params)
+    .on(
+      [historyPush.done, historyReplace.done],
+      // @ts-ignore
+      (_, { params }) => params.pathname ?? params
+    )
 
   history.listen(({ location, action }) => {
     if (action === 'POP') {
@@ -55,26 +71,54 @@ function createRouter(routes: Route[]) {
     }
   })
 
+  /**
+   *
+   * Make actual routes map when router created. this is necessary in order to avoid
+   * multiple calculate routes map.
+   * Example: $routesMap.on(mapCreated) -> routerCreated -> actual router map
+   *
+   */
   sample({
-    source: $routesMetaInfo,
-    clock: [pathChanged, push, replace],
-    fn: (source, to) => {
-      // @ts-ignore
-      const href: string = to.pathname ?? to
-      const { map } = routeResolve(source, href)
+    source: $path,
+    clock: routerCreated,
+    fn: (path, model) => {
+      const routesMap = reduceMap(model)
+      const patterns = makePatterns(routesMap)
+      const { map } = routeResolve(
+        {
+          patterns,
+          routesMap,
+        },
+        path
+      )
+
       return map
     },
     target: $routesMap,
   })
 
+  const resolvedPush = sample({
+    source: $routesMetaInfo,
+    clock: push,
+    fn: routeResolve,
+  })
+  const resolvedReplace = sample({
+    source: $routesMetaInfo,
+    clock: replace,
+    fn: routeResolve,
+  })
+
   sample({
-    source: { $routesMetaInfo, $path },
-    clock: routeMapUpdated,
-    fn: ({ $path, $routesMetaInfo }) => {
-      const { url } = routeResolve($routesMetaInfo, $path)
-      return url
-    },
-    target: replace,
+    source: merge([resolvedReplace, resolvedPush]).map(
+      (payload) => payload.map
+    ),
+    target: $routesMap,
+  })
+
+  sample({ source: resolvedPush.map(({ url }) => url), target: historyPush })
+  sample({
+    source: resolvedReplace.map(({ url }) => url),
+    target: historyReplace,
   })
 
   const render = (config: RouteModel) => {
@@ -148,12 +192,14 @@ function createRouter(routes: Route[]) {
 
   const routerView = () => {
     traverse(routes as RouteModel[])
-    routeMapUpdated(routes as RouteModel[])
+    routerCreated(routes as RouteModel[])
   }
 
   return {
     Link,
     $path,
+    push,
+    replace,
     routerView,
   }
 }

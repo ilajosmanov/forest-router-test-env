@@ -1,3 +1,5 @@
+import { RouteModel } from '../types'
+
 function toValue(string: string) {
   if (string === '*') return 1e11 // wild
   if (/^:(.*)\?/.test(string)) return 1111 // param optional
@@ -14,7 +16,7 @@ function toRank(string: string) {
   return (i - 1) / Number(out)
 }
 
-export function sortPatterns(
+function sortPatterns(
   array: string[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cache = {} as Record<string, any>
@@ -26,4 +28,8 @@ export function sortPatterns(
       (cache[b] = cache[b] || toRank(b)) - (cache[a] = cache[a] || toRank(a))
     )
   })
+}
+
+export function makePatterns(map: Record<string, RouteModel>) {
+  return sortPatterns(Object.keys(map))
 }
