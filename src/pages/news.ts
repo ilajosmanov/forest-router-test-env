@@ -1,7 +1,6 @@
-import { Link } from '@/router'
 import { createStore } from 'effector-logger'
 import { h, list, spec } from 'forest'
-import { Component } from '../pkg'
+import { Component, RouterLink } from '../pkg'
 
 export const News: Component = ({ routerView }) => {
   h('div', () => {
@@ -25,7 +24,7 @@ export const News: Component = ({ routerView }) => {
           fields: ['path', 'text'],
           fn: ({ fields: [path, text] }) => {
             h('li', () => {
-              Link({ text, to: path })
+              RouterLink({ text, to: path })
             })
           },
         })

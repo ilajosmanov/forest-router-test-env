@@ -1,4 +1,5 @@
-import { Link, routerView } from '@/router'
+import { RouterLink } from '@/pkg'
+import { routerView } from '@/router'
 import { createStore } from 'effector'
 import { h, list } from 'forest'
 
@@ -19,7 +20,7 @@ function App() {
           fields: ['path', 'text'],
           fn: ({ fields: [path, text] }) => {
             h('li', () => {
-              Link({ text, to: path })
+              RouterLink({ text, to: path })
             })
           },
         })
