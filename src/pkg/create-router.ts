@@ -1,3 +1,4 @@
+import { createStore } from 'effector-logger'
 import { route } from 'forest'
 
 import { $path, $routesMap, routerCreated } from './model'
@@ -22,6 +23,11 @@ function createRouter(routes: Route[]) {
     for (const route of routes) {
       route.active = false
       route.parents = [...(parent?.parents || [])]
+
+      if (!route.guard) {
+        const source = createStore(true)
+        route.guard = { source }
+      }
 
       route.pattern = parent
         ? (parent.pattern + route.path).replace('//', '/')

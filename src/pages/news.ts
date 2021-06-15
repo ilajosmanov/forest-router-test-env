@@ -5,7 +5,7 @@ import { Component, RouterLink } from '../pkg'
 export const News: Component = ({ routerView }) => {
   h('div', () => {
     const $items = createStore([
-      { path: '/about/news/hot', id: '1', text: 'Hot' },
+      { path: '/about/news/1/hot', id: '1', text: 'Hot' },
       { path: '/about/news/latest', id: '2', text: 'Latest' },
     ])
 

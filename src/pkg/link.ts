@@ -1,5 +1,5 @@
 import { combine, createEvent, createStore, guard, is, Store } from 'effector'
-import { $path, push, replace } from './model'
+import { $path, linkClicked } from './model'
 
 type Attrs = {
   to: string | Store<string>
@@ -18,22 +18,11 @@ function link<T = unknown>(payload: Attrs) {
       : createStore(payload.replace || false)
   ) as Store<boolean>
 
-  const protectedRoute = guard({
-    source: $to,
+  guard({
+    source: { path: $to, replace: $replace },
     clock: trigger,
     filter: combine($to, $path, (to, path) => to !== path),
-  })
-
-  guard({
-    source: protectedRoute,
-    filter: $replace.map((s) => !s),
-    target: push,
-  })
-
-  guard({
-    source: protectedRoute,
-    filter: $replace,
-    target: replace,
+    target: linkClicked,
   })
 
   return trigger

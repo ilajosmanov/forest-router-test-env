@@ -10,6 +10,7 @@ function App() {
     const $items = createStore([
       { path: '/', id: '1', text: 'Main' },
       { path: '/about', id: '2', text: 'About' },
+      { path: '/about/news/1/hot', id: '1', text: 'Hot' },
     ])
 
     h('nav', () => {

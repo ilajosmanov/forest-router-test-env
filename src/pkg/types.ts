@@ -1,4 +1,4 @@
-import { Store } from 'effector'
+import { Store, Unit } from 'effector'
 
 type Args = {
   routerView: () => void
@@ -15,6 +15,11 @@ export type RouteModel = {
   parents: RouteModel[]
   redirect?: string
   children?: Route[]
+  guard?: {
+    // source: boolean | Store<boolean> | (boolean | Store<boolean>)[]
+    source: Store<boolean>
+    success?: Unit<string>
+  }
 }
 
 export type Route = Omit<RouteModel, 'pattern' | 'active' | 'parents'>

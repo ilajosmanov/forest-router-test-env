@@ -1,3 +1,4 @@
+import { createStore } from 'effector-logger'
 import { Route } from '../pkg'
 
 import { Main } from '../pages/main'
@@ -6,6 +7,8 @@ import { News } from '../pages/news'
 import { Articles } from '../pages/articles'
 import { Latest } from '../pages/latest'
 import { Hot } from '../pages/hot'
+
+const $test = createStore(false)
 
 const routes: Route[] = [
   { path: '/', fn: Main },
@@ -18,9 +21,15 @@ const routes: Route[] = [
         path: '/news',
         fn: News,
         redirect: '/latest',
+        guard: {
+          source: $test,
+        },
         children: [
           { path: '/latest', fn: Latest },
-          { path: '/hot', fn: Hot },
+          {
+            path: '/:id/hot',
+            fn: Hot,
+          },
         ],
       },
     ],

@@ -7,22 +7,24 @@ type Maps = {
   patterns: string[]
 }
 
-function findMap(target: string, patterns: string[]) {
+export function findMap(target: string, patterns: string[]) {
   return patterns.find((p) => pathToRegexp(p).exec(target))
 }
 
-function routeResolve(maps: Maps, href: string) {
-  const pattern = findMap(href, maps.patterns)
+function routeResolve(
+  maps: Maps,
+  clock: { pathname: string; pattern: string }
+) {
   const map = { ...maps.routesMap }
-  let url = href
+  let url = clock.pathname
 
-  if (pattern) {
-    let targetMap = map[pattern]
-    url = targetMap.redirect ?? href
+  if (clock.pattern) {
+    let targetMap = map[clock.pattern]
+    url = targetMap.redirect ?? clock.pathname
 
     const actualPattern =
       (targetMap.redirect && findMap(targetMap.redirect, maps.patterns)) ||
-      pattern
+      clock.pattern
 
     targetMap = map[actualPattern]
     targetMap.active = true

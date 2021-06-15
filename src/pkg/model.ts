@@ -3,13 +3,14 @@ import {
   createEffect,
   createEvent,
   createStore,
+  guard,
   sample,
-} from 'effector'
+} from 'effector-logger'
 import { createBrowserHistory } from 'history'
 
 import { reduceMap } from './lib/reduce-map'
 import { makePatterns } from './lib/sort-patterns'
-import { routeResolve } from './lib/route-resolve'
+import { findMap, routeResolve } from './lib/route-resolve'
 import type { RouteModel } from './types'
 
 const history = createBrowserHistory()
@@ -27,8 +28,10 @@ const historyReplace = createEffect(history.replace)
  * public interface for change route (push, replace)
  *
  */
-const push = createEvent<string>()
-const replace = createEvent<string>()
+
+const linkClicked = createEvent<{ path: string; replace?: boolean }>()
+const access =
+  createEvent<{ pathname: string; pattern: string; replace?: boolean }>()
 
 const pathChanged = createEvent<string>()
 const routerCreated = createEvent<RouteModel[]>()
@@ -60,73 +63,80 @@ history.listen(({ location, action }) => {
   }
 })
 
-/**
- *
- * Make actual routes map when router created. this is necessary in order to avoid
- * multiple calculate routes map.
- * Example: $routesMap.on(mapCreated) -> routerCreated -> actual router map
- *
- */
-sample({
+const initialized = sample({
   source: $path,
   clock: routerCreated,
-  fn: (path, model) => {
-    const routesMap = reduceMap(model)
-    const patterns = makePatterns(routesMap)
-    const { map } = routeResolve(
-      {
-        patterns,
-        routesMap,
-      },
-      path
-    )
+  fn: (path, model) => ({
+    path,
+    map: reduceMap(model),
+  }),
+})
 
-    return map
+const resolved = sample({
+  source: $routesMetaInfo,
+  clock: access,
+  fn: (source, clock) => {
+    const replace = clock.replace
+    const response = routeResolve(source, clock)
+    return { ...response, replace }
   },
-  target: $routesMap,
 })
 
-/**
- *
- * Get correct path
- *
- */
-const resolvedPush = sample({
-  source: $routesMetaInfo,
-  clock: push,
-  fn: routeResolve,
-})
-const resolvedReplace = sample({
-  source: $routesMetaInfo,
-  clock: replace,
-  fn: routeResolve,
-})
-
-/**
- *
- * Update route map and set active flag for page-components
- *
- */
 sample({
-  clock: [resolvedPush, resolvedReplace],
-  fn: ({ map }) => map,
-  target: $routesMap,
-})
-
-/**
- *
- * Push path to history API
- *
- */
-sample({
-  clock: resolvedPush,
+  clock: guard(resolved, {
+    filter: (p) => p.replace !== true && typeof p.replace === 'boolean',
+  }),
   fn: ({ url }) => url,
   target: historyPush,
 })
 sample({
-  clock: resolvedReplace,
+  clock: guard(resolved, {
+    filter: (p) => p.replace === true && typeof p.replace === 'boolean',
+  }),
   fn: ({ url }) => url,
   target: historyReplace,
 })
 
-export { $path, $routesMap, routerCreated, push, replace }
+sample({
+  clock: [initialized, resolved],
+  fn: ({ map }) => map,
+  target: $routesMap,
+})
+
+const mapFound = guard({
+  source: sample({
+    source: { $routesMap, $patterns },
+    clock: [linkClicked, initialized],
+    fn: (source, { path, ...props }) => {
+      const pattern = findMap(path, source.$patterns)
+      return pattern
+        ? {
+            // @ts-ignore
+            replace: props.replace ?? undefined,
+            pathname: path,
+            map: source.$routesMap[pattern],
+          }
+        : null
+    },
+  }),
+  filter: Boolean,
+})
+
+const currentRoute = guard(mapFound, {
+  filter: ({ map }) =>
+    Boolean(
+      map.guard?.source.getState() &&
+        map.parents.every((parent) => parent.guard?.source.getState())
+    ),
+})
+
+sample({
+  source: currentRoute.map(({ pathname, map, replace }) => ({
+    replace,
+    pathname,
+    pattern: map.pattern,
+  })),
+  target: access,
+})
+
+export { $path, $routesMap, routerCreated, linkClicked }
