@@ -25,13 +25,13 @@ function link<T = unknown>(payload: Attrs) {
   })
 
   guard({
-    clock: protectedRoute,
+    source: protectedRoute,
     filter: $replace.map((s) => !s),
     target: push,
   })
 
   guard({
-    clock: protectedRoute,
+    source: protectedRoute,
     filter: $replace,
     target: replace,
   })
