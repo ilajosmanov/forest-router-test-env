@@ -19,6 +19,7 @@ export type RouteModel = {
     // source: boolean | Store<boolean> | (boolean | Store<boolean>)[]
     source: Store<boolean>
     success?: Unit<string>
+    fail?: Unit<string>
   }
 }
 

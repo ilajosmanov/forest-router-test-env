@@ -31,7 +31,11 @@ const historyReplace = createEffect(history.replace)
 
 const linkClicked = createEvent<{ path: string; replace?: boolean }>()
 const access =
-  createEvent<{ pathname: string; pattern: string; replace?: boolean }>()
+  createEvent<{
+    pathname: string
+    pattern: string
+    replace?: boolean
+  }>()
 
 const pathChanged = createEvent<string>()
 const routerCreated = createEvent<RouteModel[]>()
@@ -122,7 +126,8 @@ const mapFound = guard({
   filter: Boolean,
 })
 
-const currentRoute = guard(mapFound, {
+// success case: when current route and him parents have truthy guards
+const successCase = guard(mapFound, {
   filter: ({ map }) =>
     Boolean(
       map.guard?.source.getState() &&
@@ -130,10 +135,11 @@ const currentRoute = guard(mapFound, {
     ),
 })
 
+// fail case: when current route or some him parent have falsy guard or
+
 sample({
-  source: currentRoute.map(({ pathname, map, replace }) => ({
-    replace,
-    pathname,
+  source: successCase.map(({ map, ...options }) => ({
+    ...options,
     pattern: map.pattern,
   })),
   target: access,
