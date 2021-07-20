@@ -1,5 +1,3 @@
-import { RouteModel } from '../types'
-
 function toValue(string: string) {
   if (string === '*') return 1e11 // wild
   if (/^:(.*)\?/.test(string)) return 1111 // param optional
@@ -30,6 +28,6 @@ function sortPatterns(
   })
 }
 
-export function makePatterns(map: Record<string, RouteModel>) {
+export function makePatterns(map: Record<string, unknown>) {
   return sortPatterns(Object.keys(map))
 }

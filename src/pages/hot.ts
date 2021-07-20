@@ -1,7 +1,7 @@
 import { h, spec } from 'forest'
 import { Component } from '../pkg'
 
-export const Hot: Component = () => {
+export const Hot: Component = ({ routerView }) => {
   h('div', () => {
     spec({
       attr: {
@@ -9,5 +9,6 @@ export const Hot: Component = () => {
       },
       text: 'Hello, from Hot page',
     })
+    routerView()
   })
 }

@@ -1,6 +1,7 @@
-import { createStore } from 'effector-logger'
+import { createStore } from 'effector'
 import { h, list, spec } from 'forest'
-import { Component, RouterLink } from '../pkg'
+import { Component } from '../pkg'
+import { RouterLink } from '../effector-router'
 
 export const News: Component = ({ routerView }) => {
   h('div', () => {

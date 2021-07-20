@@ -1,4 +1,4 @@
-import { createEvent, createStore } from 'effector-logger'
+import { createEvent, createStore } from 'effector'
 import { Route } from '../pkg'
 
 import { Main } from '../pages/main'
@@ -32,6 +32,12 @@ const routes: Route[] = [
           {
             path: '/:id/hot',
             fn: Hot,
+            children: [
+              {
+                path: '/hot-2',
+                fn: Hot,
+              },
+            ],
           },
         ],
       },
