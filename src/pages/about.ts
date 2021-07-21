@@ -1,40 +1,16 @@
-import { createStore } from 'effector'
-import { h, list, spec, val } from 'forest'
-import { Component } from '../pkg'
-import { RouterLink } from '../effector-router'
+import { h, spec, val } from 'forest'
+import { RouterLink, View } from '../effector-router'
 
-export const About: Component = ({ routerView, path }) => {
+export const About = View(({ path, routerView }) => {
   h('div', () => {
-    const $items = createStore([
-      { path: '/about/news', id: '1', text: 'News' },
-      { path: '/about/articles', id: '2', text: 'Articles' },
-    ])
-
+    RouterLink({
+      text: val`To Internal Article with ID: 1`,
+      to: '/about/1/internal-article',
+    })
     spec({
-      attr: {
-        class: 'page',
-      },
-      text: 'Hello, from About page',
+      text: val`This is about page: ${path}`,
     })
 
-    h('span', {
-      text: val`current Path: ${path}`,
-    })
-
-    h('nav', () => {
-      h('ul', () => {
-        list({
-          source: $items,
-          key: 'id',
-          fields: ['path', 'text'],
-          fn: ({ fields: [path, text] }) => {
-            h('li', () => {
-              RouterLink({ text, to: path })
-            })
-          },
-        })
-      })
-    })
     routerView()
   })
-}
+})

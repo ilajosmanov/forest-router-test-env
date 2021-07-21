@@ -1,25 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, no-param-reassign */
+
 function toValue(string: string) {
-  if (string === '*') return 1e11 // wild
-  if (/^:(.*)\?/.test(string)) return 1111 // param optional
-  if (/^:(.*)\./.test(string)) return 11 // param w/ suffix
-  if (string.startsWith(':')) return 111 // param
-  return 1 // static
+  if (string === '*') return 1e11
+  if (/^:(.*)\?/.test(string)) return 1111
+  if (/^:(.*)\./.test(string)) return 11
+  if (string.startsWith(':')) return 111
+  return 1
 }
 
 function toRank(string: string) {
-  let i = 0,
-    out = ''
+  let i = 0
+  let out = ''
   const array = string.split('/')
   for (; i < array.length; i++) out += toValue(array[i])
   return (i - 1) / Number(out)
 }
 
-function sortPatterns(
-  array: string[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cache = {} as Record<string, any>
-) {
-  // eslint-disable-next-line no-param-reassign
+function sortPatterns(array: string[], cache = {} as Record<string, any>) {
   cache = {}
   return array.sort((a, b) => {
     return (

@@ -1,16 +1,16 @@
-import { createEvent, createStore } from 'effector'
-import { Route } from '../pkg'
+import { About } from '@/pages/about'
+import { Main } from '@/pages/main'
+import { InternalArticle } from '@/pages/internal-article'
 
-import { Main } from '../pages/main'
-import { About } from '../pages/about'
-import { News } from '../pages/news'
-import { Articles } from '../pages/articles'
-import { Latest } from '../pages/latest'
-import { Hot } from '../pages/hot'
+import { createStore } from 'effector'
+import { createEvent } from 'effector-logger'
+import { Route } from '../effector-router'
 
 const $test = createStore(true)
-
-const clock = createEvent<string>()
+const $test1 = createStore(false)
+const access = createEvent<string>()
+const access1 = createEvent<string>()
+const fail1 = createEvent<string>()
 
 const routes: Route[] = [
   { path: '/', fn: Main },
@@ -19,27 +19,17 @@ const routes: Route[] = [
     fn: About,
     guard: {
       source: $test,
-      success: clock,
+      done: access,
     },
     children: [
-      { path: '/articles', fn: Articles },
       {
-        path: '/news',
-        fn: News,
-        redirect: '/latest',
-        children: [
-          { path: '/latest', fn: Latest },
-          {
-            path: '/:id/hot',
-            fn: Hot,
-            children: [
-              {
-                path: '/hot-2',
-                fn: Hot,
-              },
-            ],
-          },
-        ],
+        path: '/:id/internal-article',
+        guard: {
+          source: $test1,
+          done: access1,
+          fail: fail1,
+        },
+        fn: InternalArticle,
       },
     ],
   },

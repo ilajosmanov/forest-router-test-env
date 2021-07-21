@@ -1,13 +1,14 @@
-import { h, spec } from 'forest'
-import { Component } from '../pkg'
+import { h, spec, val } from 'forest'
+import { View, RouterLink } from '../effector-router'
 
-export const Main: Component = () => {
+export const Main = View(({ path }) => {
   h('div', () => {
+    RouterLink({
+      text: 'To About Page',
+      to: '/about',
+    })
     spec({
-      attr: {
-        class: 'page',
-      },
-      text: 'Hello, from Main page',
+      text: val`This is home page: ${path}`,
     })
   })
-}
+})
